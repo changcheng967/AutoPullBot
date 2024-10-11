@@ -1,4 +1,4 @@
-name: Auto Pull Request
+name: Auto Pull Request Creator
 
 on:
   push:

@@ -6,7 +6,7 @@ Thank you for considering contributing to **Autopullbot**! We welcome contributi
 
 ### Reporting Issues
 
-If you encounter any bugs or issues while using Autopullbot, please report them by opening a new issue in the [issue tracker](https://github.com/changcheng967/Kata_speed/issues). When reporting an issue, please provide:
+If you encounter any bugs or issues while using Autopullbot, please report them by opening a new issue in the [issue tracker](https://github.com/changcheng967/AutoPullBot/issues). When reporting an issue, please provide:
 
 - A clear and descriptive title.
 - Steps to reproduce the issue.

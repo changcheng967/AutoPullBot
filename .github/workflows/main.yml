@@ -49,6 +49,8 @@ jobs:
       # Step 5: Check for existing pull request
       - name: Check for Existing Pull Request
         id: check_pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Set the GH_TOKEN
         run: |
           echo "Checking for existing pull request..."
           PR_EXIST=$(gh pr list --head "${{ env.BRANCH_NAME }}" --base main --json number --jq '.[0].number')
@@ -64,6 +66,8 @@ jobs:
       - name: Create Pull Request
         if: steps.check_pr.outputs.PR_EXIST == ''
         id: create_pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Set the GH_TOKEN
         run: |
           echo "Creating a new pull request..."
           PR_OUTPUT=$(gh pr create \

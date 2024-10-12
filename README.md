@@ -1,4 +1,4 @@
-
+[![Auto Pull Bot](https://github.com/changcheng967/AutoPullBot/actions/workflows/main.yml/badge.svg?branch=Dev)](https://github.com/changcheng967/AutoPullBot/actions/workflows/main.yml)
 # Autopullbot Configuration
 
 This `Autopullbot.yml` file is designed for automating the process of pulling changes from specified branches into a target branch within a GitHub repository.

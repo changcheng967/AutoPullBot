@@ -17,23 +17,24 @@ jobs:
 
       # Step 2: Extract and log the current branch name
       - name: Get Branch Name
+        id: get_branch
         run: |
-          echo "GITHUB_REF is $GITHUB_REF"
-          BRANCH_NAME=$(echo "${GITHUB_REF#refs/heads/}" | tr -d '\n' | tr -d '\r')
+          echo "Extracting branch name..."
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          echo "Current Branch: $BRANCH_NAME"
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
 
       # Step 3: Ensure the current branch is not 'main'
       - name: Check Branch
         run: |
-          echo "Checking if on main branch..."
-          if [ "${{ env.BRANCH_NAME }}" == "main" ]; then
-            echo "Currently on the main branch; no pull request will be created."
+          if [[ "${{ env.BRANCH_NAME }}" == "main" ]]; then
+            echo "No pull request created; currently on the main branch."
             exit 0
           fi
-          echo "Not on the main branch; proceeding."
 
       # Step 4: Fetch the main branch and check if the current branch is behind
       - name: Check If Branch is Behind Main
+        id: check_behind
         run: |
           echo "Fetching the main branch for comparison..."
           git fetch origin main
@@ -41,57 +42,43 @@ jobs:
           echo "Branch is behind main by $BEHIND commits."
           echo "BEHIND=$BEHIND" >> $GITHUB_ENV
           if [ "$BEHIND" -le 0 ]; then
-            echo "Branch is up to date with main; no pull request will be created."
+            echo "No pull request created; branch is up to date with main."
             exit 0
           fi
 
-      # Step 5: Check if a pull request already exists
+      # Step 5: Check for existing pull request
       - name: Check for Existing Pull Request
         id: check_pr
         run: |
+          echo "Checking for existing pull request..."
           PR_EXIST=$(gh pr list --head "${{ env.BRANCH_NAME }}" --base main --json number --jq '.[0].number')
           if [ -n "$PR_EXIST" ]; then
-            echo "A pull request for branch '${{ env.BRANCH_NAME }}' already exists: https://github.com/${{ github.repository }}/pull/$PR_EXIST"
+            echo "A pull request already exists: https://github.com/${{ github.repository }}/pull/$PR_EXIST"
             echo "PR_EXIST=$PR_EXIST" >> $GITHUB_ENV
-          else
-            echo "No existing pull request found."
+            echo "No new pull request created."
+            exit 0
           fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Set the GH_TOKEN
+          echo "No existing pull request found."
 
       # Step 6: Create a pull request only if none exists
       - name: Create Pull Request
         if: steps.check_pr.outputs.PR_EXIST == ''
         id: create_pr
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Set the GH_TOKEN
         run: |
           echo "Creating a new pull request..."
           PR_OUTPUT=$(gh pr create \
             --title "Auto Pull Request - ${{ env.BRANCH_NAME }}" \
-            --body "Auto-generated PR to merge '${{ env.BRANCH_NAME }}' into 'main'" \
+            --body "This pull request merges changes from '${{ env.BRANCH_NAME }}' into 'main'." \
             --base main \
             --head "${{ env.BRANCH_NAME }}" \
             --repo "${{ github.repository }}" \
+            --label "Auto Merge" \
             || echo "Pull request creation failed")
-          echo "PR_OUTPUT=$PR_OUTPUT" >> $GITHUB_ENV
+          echo "$PR_OUTPUT"
           PR_URL=$(echo "$PR_OUTPUT" | grep -o 'http.*$')
           echo "PR_URL=$PR_URL" >> $GITHUB_ENV
 
-      # Step 7: Add labels to the pull request
-      - name: Add Labels to Pull Request
-        run: |
-          echo "Adding labels to the pull request..."
-          if [ -n "${{ env.PR_EXIST }}" ]; then
-            PR_NUMBER=${{ env.PR_EXIST }}
-          else
-            PR_NUMBER=$(echo "${{ env.PR_URL }}" | grep -o '[0-9]*$')
-          fi
-          gh pr edit "$PR_NUMBER" --add-label "github_actions" --add-label "Auto Merge"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Set the GH_TOKEN
-
-      # Step 8: Notify about successful PR creation
+      # Step 7: Notify about successful PR creation
       - name: Notify PR Creation
         if: steps.create_pr.outputs.PR_URL != ''
         run: |

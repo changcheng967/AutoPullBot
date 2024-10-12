@@ -103,7 +103,7 @@ jobs:
           else
             PR_NUMBER=$(echo "${{ env.PR_URL }}" | grep -o '[0-9]*$')
           fi
-          gh pr edit "$PR_NUMBER" --add-milestone "Version 2.0"
+          gh pr edit "$PR_NUMBER" -m "Version 2.0"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Set the GH_TOKEN
 
